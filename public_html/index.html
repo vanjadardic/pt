@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="">
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title></title>
+      <link rel="stylesheet" href="main.css">
+      <script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+
+      <!-- Iron elements -->
+      <link rel="import" href="bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+
+      <!-- Neon elements -->
+      <link rel="import" href="bower_components/neon-animation/neon-animated-pages.html">
+      <link rel="import" href="bower_components/neon-animation/neon-animatable.html">
+      <link rel="import" href="bower_components/neon-animation/neon-animations.html">
+
+      <!-- My elements -->
+      <link rel="import" href="elements/elements.html">
+
+      <style>
+         ::-webkit-scrollbar {
+            width: 0 !important;
+         }
+      </style>
+      <script>
+         document.addEventListener('WebComponentsReady', function() {
+            document.getElementById('usb1').addEventListener('click', function (e) {
+               var fileBrowser = document.getElementById('fileBrowser');
+               fileBrowser.rootPath = 'D:\\pt\\usb folder\\';
+               fileBrowser.reset();
+               fileBrowser.showFolder(fileBrowser.rootPath);
+
+               setTimeout(function() {
+                  var pages = document.querySelector('neon-animated-pages');
+                  pages.entryAnimation = 'slide-from-right-animation';
+                  pages.exitAnimation = 'slide-left-animation';
+                  pages.selectNext();
+               }, 200);
+            });
+            document.getElementById('usb2').addEventListener('click', function (e) {
+               var fileBrowser = document.getElementById('fileBrowser');
+               fileBrowser.rootPath = 'D:\\pt\\usb folder\\New Folder\\';
+               fileBrowser.reset();
+               fileBrowser.showFolder(fileBrowser.rootPath);
+
+               setTimeout(function() {
+                  var pages = document.querySelector('neon-animated-pages');
+                  pages.entryAnimation = 'slide-from-right-animation';
+                  pages.exitAnimation = 'slide-left-animation';
+                  pages.selectNext();
+                }, 200);
+            });
+
+            document.getElementById('fileBrowser').addEventListener('selected', function (e) {
+               var file = e.detail;
+
+               var pages = document.querySelector('neon-animated-pages');
+               pages.entryAnimation = 'slide-from-right-animation';
+               pages.exitAnimation = 'slide-left-animation';
+               pages.selectNext();
+            });
+
+            document.getElementById('fileBrowser').addEventListener('back', function (e) {
+               var pages = document.querySelector('neon-animated-pages');
+               pages.entryAnimation = 'slide-from-left-animation';
+               pages.exitAnimation = 'slide-right-animation';
+
+
+               var cb = function() {
+                  e.target.reset();
+                  pages.removeEventListener('before-animation-complete', cb);
+               };
+               pages.addEventListener('before-animation-complete', cb);
+
+
+
+
+               pages.selectPrevious();
+            });
+
+            document.getElementById('printPreview').addEventListener('back', function (e) {
+               var pages = document.querySelector('neon-animated-pages');
+               pages.entryAnimation = 'slide-from-left-animation';
+               pages.exitAnimation = 'slide-right-animation';
+               pages.selectPrevious();
+            });
+
+//            document.querySelector('neon-animated-pages').addEventListener('neon-animation-finish', function(e) {
+//
+//               console.log('aaaa', e);
+//               debugger;
+//            });
+
+//before-animation-complete
+
+
+         });
+      </script>
+   </head>
+   <body unresolved class="fullbleed layout vertical">
+      <neon-animated-pages class="fit relative layout vertical" selected="0" entry-animation="[[entryAnimation]]" exit-animation="[[exitAnimation]]">
+         <div>
+            <paper-button id="usb1">Ubaci stik 1</paper-button>
+            <paper-button id="usb2">Ubaci stik 2</paper-button>
+         </div>
+         <file-browser id="fileBrowser" class="fit"></file-browser>
+         <print-preview id="printPreview"></print-preview>
+      </neon-animated-pages>
+   </body>
+</html>

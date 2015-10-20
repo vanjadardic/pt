@@ -1,0 +1,25 @@
+{
+   "name": "pt",
+   "version": "0.0.0",
+   "authors": [
+      "Vanja Dardic <vanjadardic5@gmail.com>"
+   ],
+   "description": "",
+   "main": "",
+   "moduleType": [],
+   "license": "MIT",
+   "homepage": "",
+   "ignore": [
+      "**/.*",
+      "node_modules",
+      "bower_components",
+      "test",
+      "tests"
+   ],
+   "dependencies": {
+      "polymer": "Polymer/polymer#^1.1.0",
+      "iron-elements": "PolymerElements/iron-elements#^1.0.0",
+      "paper-elements": "PolymerElements/paper-elements#^1.0.1",
+      "neon-elements": "PolymerElements/neon-elements#^1.0.0"
+   }
+}

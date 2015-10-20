@@ -1,0 +1,90 @@
+environment:
+path -> scripts
+pttemp -> temp
+
+run:
+C:\Users\User>D:\nwjs-v0.12.3-win-x64\nw.exe D:\pt
+
+word macros:
+Sub sIKZh23O48m3RDTG_saveaspdf_content()
+    Dim tmp As String
+    tmp = CStr(Environ("pttemp"))
+    ActivePrinter = "Microsoft Print to PDF"
+    Application.ActiveDocument.PrintOut _
+        Range:=wdPrintAllDocument, _
+        Item:=wdPrintDocumentContent, _
+        Copies:=1, _
+        Pages:="", _
+        PageType:=wdPrintAllPages, _
+        Collate:=True, _
+        Background:=False, _
+        PrintToFile:=True, _
+        PrintZoomColumn:=0, _
+        PrintZoomRow:=0, _
+        PrintZoomPaperWidth:=0, _
+        PrintZoomPaperHeight:=0, _
+        OutputFileName:=tmp & "fromword.pdf", _
+        Append:=False
+    Application.Quit _
+        SaveChanges:=wdDoNotSaveChanges
+End Sub
+Sub sIKZh23O48m3RDTG_saveaspdf_withmarkup()
+    Dim tmp As String
+    tmp = CStr(Environ("pttemp"))
+    ActivePrinter = "Microsoft Print to PDF"
+    Application.ActiveDocument.PrintOut _
+        Range:=wdPrintAllDocument, _
+        Item:=wdPrintDocumentWithMarkup, _
+        Copies:=1, _
+        Pages:="", _
+        PageType:=wdPrintAllPages, _
+        Collate:=True, _
+        Background:=True, _
+        PrintToFile:=True, _
+        PrintZoomColumn:=0, _
+        PrintZoomRow:=0, _
+        PrintZoomPaperWidth:=0, _
+        PrintZoomPaperHeight:=0, _
+        OutputFileName:=tmp & "fromword.pdf", _
+        Append:=False
+    Application.Quit _
+        SaveChanges:=wdDoNotSaveChanges
+End Sub
+
+ghostscript:
+ProcessBuilder g = new ProcessBuilder(
+   ghostscript, "-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=png16m", "-r"+dpi, "-dTextAlphaBits=4",
+   "-sOutputFile=" + System.getProperty("java.io.tmpdir") + pdfFileName + "-%0000d.png",
+   System.getProperty("java.io.tmpdir") + pdfFileName);
+
+drivescanner:
+'use strict';
+
+function DriveScanner(onAddCallback, onRemoveCallback, scanInterval) {
+   this.onAdd = onAddCallback;
+   this.onRemove = onRemoveCallback;
+   this.delay = scanInterval || 20;
+}
+
+DriveScanner.prototype.start = function() {
+   var me = this;
+   var fs = require('fs');
+   var drives = new Array(26);
+   var i;
+   for (i = 0; i < 26; i++) {
+      drives[i] = String.fromCharCode('A'.charCodeAt(0) + i) + ':\\';
+   }
+   var states = new Array(26);
+   i = -1;
+   setInterval(function() {
+      i = (i + 1) % drives.length;
+      (function(i) {
+         fs.exists(drives[i], function(exists) {
+            if (typeof states[i] !== 'undefined' && states[i] !== exists) {
+               me[exists ? 'onAdd' : 'onRemove'](drives[i]);
+            }
+            states[i] = exists;
+         });
+      })(i);
+   }, me.delay);
+};

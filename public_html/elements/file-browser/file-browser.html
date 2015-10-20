@@ -1,0 +1,270 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<!-- Iron elements -->
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/device-icons.html">
+
+<!-- Neon elements -->
+<link rel="import" href="../../bower_components/neon-animation/neon-animation-runner-behavior.html">
+
+<!-- Paper elements -->
+<link rel="import" href="../../bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-styles/shadow.html">
+<link rel="import" href="../../bower_components/paper-styles/color.html">
+
+<dom-module id="file-browser">
+   <template>
+      <style>
+         :host {
+            @apply(--layout-vertical);
+         }
+         .file {
+            margin: 10px;
+            width: 200px;
+            text-transform: none;
+            padding: 0;
+         }
+         .pads {
+            margin: 0 10px;
+            width: 200px;
+            height: 0;
+         }
+         .file-type {
+            width: 160px;
+            height: 160px;
+         }
+         .file-hidden {
+            opacity: 0.5;
+         }
+         .file-name {
+            word-wrap: break-word;
+            max-height: 76px;
+            margin: 0 10px 10px 10px;
+            overflow: hidden;
+            display: -webkit-box;
+            text-overflow: ellipsis;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+         }
+         paper-header-panel {
+            @apply(--shadow-elevation-16dp);
+         }
+         paper-toolbar {
+            background: var(--google-red-700);
+            height: 45px;
+            overflow: hidden;
+         }
+         paper-toolbar ::shadow #topBar  {
+            height: 45px;
+            padding: 0 2px;
+            @apply(--layout-end-justified);
+         }
+         paper-toolbar paper-button {
+            text-transform: none;
+            margin: 0;
+            min-width: 42px;
+            @apply(--layout-flex-none);
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+         }
+      </style>
+      <paper-header-panel class="fit">
+         <paper-toolbar>
+            <paper-button on-click="handleBack" style="padding-top: 9px; padding-bottom: 8px;"><iron-icon icon="arrow-back"></iron-icon></paper-button>
+            <paper-button on-click="handleRootClick" style="padding-top: 9px; padding-bottom: 8px;"><iron-icon icon="device:usb"></iron-icon></paper-button>
+            <template is="dom-repeat" items="{{location}}">
+               <paper-button on-click="handleLocationClick">{{getNameSlash(item.name)}}</paper-button>
+            </template>
+            <div style="width: 100%;"></div>
+         </paper-toolbar>
+         <div id="filesContainer" class="flex layout horizontal around-justified wrap" style="padding: 10px;">
+            <template is="dom-repeat" items="{{files}}">
+               <paper-button raised class="file" on-click="handleFileClick">
+                  <img class$="{{getFileTypeClass(item.isHidden)}}" src$="{{getFileTypeImage(item.name,item.isFile)}}" alt=""/>
+                  <div class="file-name">{{item.name}}</div>
+               </paper-button>
+            </template>
+            <div class="pads"></div><div class="pads"></div><div class="pads"></div>
+            <div class="pads"></div><div class="pads"></div><div class="pads"></div>
+            <div class="pads"></div><div class="pads"></div><div class="pads"></div>
+         </div>
+      </paper-header-panel>
+   </template>
+   <script>
+      (function() {
+         'use strict';
+
+         Polymer({
+            is: 'file-browser',
+            behaviors: [
+               Polymer.NeonAnimationRunnerBehavior
+            ],
+            properties: {
+               rootPath: String
+            },
+            ready: function() {
+               var me = this;
+               me.fs = require('fs');
+               me.exec = require('child_process').exec;
+               me.files = [];
+               me.location = [];
+               me.delayTime = 200;
+               me.reset();
+            },
+            reset: function() {
+               var me = this;
+               me.splice('files', 0, me.files.length);
+               me.splice('location', 0, me.location.length);
+               me.delay = false;
+               me.hiddenFiles = {};
+               me.$.filesContainer.parentElement.scrollTop = 0;
+            },
+            handleBack: function() {
+               var me = this;
+               if (me.delay) {
+                  return;
+               }
+               me.delay = true;
+               setTimeout(function() {
+                  me.fire('back');
+                  me.delay = false;
+               }, me.delayTime);
+            },
+            showFolder: function(path) {
+               var me = this;
+               me.splice('files', 0, me.files.length);
+               var files = [];
+               var fileNames = me.fs.readdirSync(path);
+               for (var i = 0; i < fileNames.length; i++) {
+                  var stats = me.fs.statSync(path + fileNames[i]);
+                  if (stats.isFile() || stats.isDirectory()) {
+                     if (me.getFileTypeImage(fileNames[i], stats.isFile())) {
+                        files.push({
+                           name: fileNames[i],
+                           fullName: path + fileNames[i],
+                           isFile: stats.isFile(),
+                           isHidden: me.hiddenFiles[path + fileNames[i]] === true
+                        });
+                     }
+                  }
+               }
+               files.sort(function(a, b) {
+                  if (!a.isFile && b.isFile) {
+                     return -1;
+                  } else if (a.isFile && !b.isFile) {
+                     return 1;
+                  }
+                  var aname = a.name.toLowerCase();
+                  var bname = b.name.toLowerCase();
+                  if (aname < bname) {
+                     return -1;
+                  } else if (aname > bname) {
+                     return 1;
+                  } else {
+                     return 0;
+                  }
+               });
+               var allFiles = '';
+               for (var i = 0; i < files.length; i++) {
+                  me.push('files', files[i]);
+                  allFiles += '"' + files[i].fullName + '" ';
+               }
+               me.exec('cmd /C CheckAttributes.bat ' + allFiles, function(error, stdout, stderr) {
+                  var fileAttributes = stdout.split('\r\n');
+                  for (var i = 0; i < fileAttributes.length - 1; i++) {
+                     var isHidden = fileAttributes[i].charAt(4) === 'H';
+                     var fullName = fileAttributes[i].substr(13);
+                     for (var j = 0; j < files.length; j++) {
+                        if (files[j].fullName === fullName) {
+                           me.set('files.' + j + '.isHidden', isHidden);
+                        }
+                     }
+                     if (isHidden) {
+                        me.hiddenFiles[me.files[i].fullName] = true;
+                     } else {
+                        delete me.hiddenFiles[me.files[i].fullName];
+                     }
+                  }
+               });
+            },
+            getFileTypeImage: function(fileName, isFile) {
+               var me = this;
+               if (!isFile) {
+                  return me.resolveUrl('folder.png');
+               }
+               var fileNameLower = fileName.toLowerCase();
+               if (fileNameLower.endsWith('.doc') || fileNameLower.endsWith('.docx')) {
+                  return me.resolveUrl('docx.png');
+               } else if (fileNameLower.endsWith('.ppt') || fileNameLower.endsWith('.pptx')) {
+                  return me.resolveUrl('pptx.png');
+               } else if (fileNameLower.endsWith('.pdf')) {
+                  return me.resolveUrl('pdf.png');
+               }
+            },
+            getFileTypeClass: function(isHidden) {
+               return 'file-type' + (isHidden ? ' file-hidden' : '');
+            },
+            getNameSlash: function(name) {
+               return '/' + name;
+            },
+            handleFileClick: function(e) {
+               var me = this;
+               if (me.delay) {
+                  return;
+               }
+               var file = e.model.item;
+               me.delay = true;
+               if (!file.isFile) {
+                  setTimeout(function() {
+                     me.push('location', file);
+                     me.showFolder(file.fullName + '\\');
+                     me.delay = false;
+                  }, me.delayTime);
+               } else {
+                  setTimeout(function() {
+                     me.fire('selected', file);
+                     me.delay = false;
+                  }, me.delayTime);
+               }
+            },
+            handleRootClick: function(e) {
+               var me = this;
+               if (me.location.length === 0) {
+                  return;
+               }
+               if (me.delay) {
+                  return;
+               }
+               me.delay = true;
+               setTimeout(function() {
+                  me.splice('location', 0, me.location.length);
+                  me.showFolder(me.rootPath);
+                  me.delay = false;
+               }, me.delayTime);
+            },
+            handleLocationClick: function(e) {
+               var me = this;
+               if (me.delay) {
+                  return;
+               }
+               var file = e.model.item;
+               var idx = me.location.indexOf(file);
+               if (idx === me.location.length - 1) {
+                  return;
+               }
+               me.delay = true;
+               setTimeout(function() {
+                  me.splice('location', idx + 1, me.location.length - idx - 1);
+                  me.showFolder(me.location[me.location.length - 1].fullName + '\\');
+                  me.delay = false;
+               }, me.delayTime);
+            }
+         });
+      })();
+   </script>
+</dom-module>

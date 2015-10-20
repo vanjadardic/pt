@@ -1,0 +1,9 @@
+{
+  "name": "pt",
+  "main": "public_html\\index.html",
+  "window": {
+     //"toolbar": false,
+     //"always-on-top": true,
+     //"kiosk":true
+  }
+}
