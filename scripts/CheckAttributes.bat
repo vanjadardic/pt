@@ -1,10 +1,7 @@
 @ECHO OFF
 :TOP
-
 IF (%1) == () GOTO END
 attrib %1
-
 SHIFT
 GOTO TOP
-
 :END

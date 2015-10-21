@@ -54,10 +54,23 @@
 
             document.getElementById('fileBrowser').addEventListener('selected', function (e) {
                var file = e.detail;
+//debugger;
+
+               var printPreview = document.querySelector('print-preview');
+               printPreview.filePath = file.fullName;
+               printPreview.reset();
 
                var pages = document.querySelector('neon-animated-pages');
                pages.entryAnimation = 'slide-from-right-animation';
                pages.exitAnimation = 'slide-left-animation';
+
+               // debugger;
+               var cb = function(e) {
+                  e.detail.toPage.showSpinner();
+                  pages.removeEventListener('neon-animation-finish', cb);
+               };
+               pages.addEventListener('neon-animation-finish', cb);
+
                pages.selectNext();
             });
 
@@ -83,7 +96,11 @@
                var pages = document.querySelector('neon-animated-pages');
                pages.entryAnimation = 'slide-from-left-animation';
                pages.exitAnimation = 'slide-right-animation';
-               pages.selectPrevious();
+
+e.target.hideSpinner();
+
+                              pages.selectPrevious();
+
             });
 
 //            document.querySelector('neon-animated-pages').addEventListener('neon-animation-finish', function(e) {

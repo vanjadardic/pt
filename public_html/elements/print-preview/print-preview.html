@@ -14,6 +14,7 @@
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-styles/shadow.html">
 <link rel="import" href="../../bower_components/paper-styles/color.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
 
 <dom-module id="print-preview">
    <template>
@@ -35,12 +36,29 @@
             margin: 0;
             min-width: 42px;
          }
+         .large-spinner {
+            width: 56px;
+            height: 56px;
+         }
+         .large-spinner ::shadow .circle.paper-spinner {
+            border-width: 6px;
+         }
+         .thumb {
+            width: 200px;
+            height: 282.84px;
+         }
       </style>
       <paper-header-panel class="fit">
          <paper-toolbar>
             <paper-button on-click="handleBack" style="padding-top: 9px; padding-bottom: 8px;"><iron-icon icon="arrow-back"></iron-icon></paper-button>
          </paper-toolbar>
-         <div class="flex layout horizontal around-justified wrap" style="padding: 10px;">
+         <div hidden="{{spinnerHidden}}" class="fit layout horizontal center center-justified">
+            <paper-spinner active class="large-spinner"></paper-spinner>
+         </div>
+         <div hidden="{{thumbsHidden}}" class="flex layout horizontal around-justified wrap" style="padding: 10px;">
+            <template is="dom-repeat" items="{{thumbs}}">
+               <img class="thumb" src="{{item}}" alt=""/>
+            </template>
          </div>
       </paper-header-panel>
    </template>
@@ -54,18 +72,30 @@
                Polymer.NeonAnimationRunnerBehavior
             ],
             properties: {
-               rootPath: String
+               filePath: String
             },
             ready: function() {
                var me = this;
-//               me.fs = require('fs');
-//               me.exec = require('child_process').exec;
-//               me.files = [];
+               me.fs = require('fs');
+               me.proc = require('process');
+               me.exec = require('child_process').exec;
+               me.thumbs = [];
+               me.thumbsHidden = true;
 //               me.location = [];
                me.delay = false;
                me.delayTime = 200;
+               me.spinnerHidden = true;
+               me.filePath = '';
 //               me.hiddenFiles = {};
 //               me.showFolder(me.rootPath);
+            },
+            reset: function() {
+               var me = this;
+               me.set('spinnerHidden', true);
+               me.set('thumbsHidden', true);
+               me.splice('thumbs', 0, me.thumbs.length);
+               me.delay = false;
+               //me.$.filesContainer.parentElement.scrollTop = 0;
             },
             handleBack: function() {
                var me = this;
@@ -77,6 +107,81 @@
                   me.fire('back');
                   me.delay = false;
                }, me.delayTime);
+            },
+            showSpinner: function() {
+               var me = this;
+               me.set('spinnerHidden', false);return;
+               var tempFolder = me.proc.env.pttemp;
+               var file = me.filePath.substring(me.filePath.lastIndexOf('\\') + 1);
+               var time = Date.now();
+               var filePrefix = file.substring(0, file.lastIndexOf('.'));
+               var destFile = tempFolder + filePrefix + '_' + time + file.substring(file.lastIndexOf('.'));
+               me.copyFile(me.filePath, destFile, function(err) {
+                  if (err) {
+                     console.log('err', err);
+                     return;
+                  }
+
+                  var comm = "WordConvertContent.bat \"" + destFile + "\" \"" + filePrefix + '_' + time + ".pdf\"";
+                  console.log(comm);
+                  me.exec(comm, function(error, stdout, stderr) {
+                     console.log(arguments);
+                     console.log('finished');
+
+                     var dpi = 50;
+                     comm = "GenerateThumbs.bat \"" + tempFolder + filePrefix + '_' + time + ".pdf\" \"" + tempFolder + filePrefix + '_' + time + "\" " + dpi;
+
+
+                     console.log(comm);
+                     me.exec(comm, function(error, stdout, stderr) {
+                        console.log(arguments);
+                        console.log('finished');
+
+                        var pagesString = stdout.split('\n')[3];
+                        var startPage = Number(pagesString.substring('Processing pages '.length, pagesString.indexOf(' ', 'Processing pages '.length)))
+                        var lastPage = Number(pagesString.substring(pagesString.lastIndexOf(' ')+1, pagesString.length-1));
+
+                        me.hideSpinner();
+                        var th = [];
+                        var pad = "0000";
+                        for(var i = startPage;i<=lastPage;i++){
+                           th.push('file:///' +tempFolder + filePrefix + '_' + time + "_"+dpi+"-"+(pad+i).slice(-pad.length)+".png");
+
+                        }
+
+                        me.set('thumbs', th);
+                        me.set('thumbsHidden', false);
+                     });
+                  });
+               });
+            },
+            hideSpinner: function() {
+               var me = this;
+               me.set('spinnerHidden', true);
+            },
+            copyFile: function(source, target, cb) {
+               var me = this;
+               var cbCalled = false;
+
+               var rd = me.fs.createReadStream(source);
+               rd.on("error", function(err) {
+                  done(err);
+               });
+               var wr = me.fs.createWriteStream(target);
+               wr.on("error", function(err) {
+                  done(err);
+               });
+               wr.on("close", function(ex) {
+                  done();
+               });
+               rd.pipe(wr);
+
+               function done(err) {
+                  if (!cbCalled) {
+                     cb(err);
+                     cbCalled = true;
+                  }
+               }
             }
          });
       })();

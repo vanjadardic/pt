@@ -3,7 +3,7 @@ path -> scripts
 pttemp -> temp
 
 run:
-C:\Users\User>D:\nwjs-v0.12.3-win-x64\nw.exe D:\pt
+D:\nwjs-v0.12.3-win-x64\nw.exe D:\pt
 
 word macros:
 Sub sIKZh23O48m3RDTG_saveaspdf_content()
@@ -21,8 +21,8 @@ Sub sIKZh23O48m3RDTG_saveaspdf_content()
         PrintToFile:=True, _
         PrintZoomColumn:=0, _
         PrintZoomRow:=0, _
-        PrintZoomPaperWidth:=0, _
-        PrintZoomPaperHeight:=0, _
+        PrintZoomPaperWidth:=11906, _
+        PrintZoomPaperHeight:=16838, _
         OutputFileName:=tmp & "fromword.pdf", _
         Append:=False
     Application.Quit _
@@ -43,8 +43,8 @@ Sub sIKZh23O48m3RDTG_saveaspdf_withmarkup()
         PrintToFile:=True, _
         PrintZoomColumn:=0, _
         PrintZoomRow:=0, _
-        PrintZoomPaperWidth:=0, _
-        PrintZoomPaperHeight:=0, _
+        PrintZoomPaperWidth:=11906, _
+        PrintZoomPaperHeight:=16838, _
         OutputFileName:=tmp & "fromword.pdf", _
         Append:=False
     Application.Quit _
